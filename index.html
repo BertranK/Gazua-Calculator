@@ -11,9 +11,12 @@
       justify-content: center;
       font-family: 'Noto Sans KR', sans-serif;
       background-color: #f0f0f0;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
     }
     .container {
-      max-width: 1600px;
+      width: 100%;
       padding: 20px;
       background-color: white;
       border-radius: 10px;
@@ -75,7 +78,20 @@
       margin-top: 10px;
     }
     canvas {
-      min-height: 600px;
+      min-height: 400px;
+    }
+    @media screen and (max-width: 1200px) {
+      #expectedReturn {
+        font-size: 20px;
+      }
+      .language-button {
+        min-width: 60px;
+        min-height: 30px;
+        font-size: 12px;
+      }
+      canvas {
+        min-height: 300px;
+      }
     }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
@@ -115,6 +131,7 @@
       <div id="expectedReturn" data-lang="en" style="display: none;">Expected Return after 50 Years: </div>
     </div>
   </div>
+
 
   <script>
     let chart;
