@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>가즈아 계산기</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      font-family: 'Noto Sans KR', sans-serif;
+      background-color: #f0f0f0;
+    }
+    .container {
+      max-width: 1600px;
+      padding: 20px;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+    h1 {
+      text-align: center;
+      color: #4a4a4a;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: #4a4a4a;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+    }
+    #expectedReturn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      font-weight: bold;
+      color: #4a4a4a;
+      background-color: rgba(255, 255, 255, 0.8);
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .language-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      min-width: 80px;
+      min-height: 30px;
+      padding: 5px;
+      font-size: 14px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .example {
+      font-size: 14px;
+      color: #777;
+      margin-top: 5px;
+    }
+    .market-returns {
+      font-size: 14px;
+      color: #777;
+      margin-top: 10px;
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <h1 data-lang="ko">가즈아 계산기</h1>
+    <h1 data-lang="en" style="display: none;">Gazua Calculator</h1>
+    
+    <button class="language-button" onclick="toggleLanguage()">Eng</button>
+
+    <label for="currentAssets" data-lang="ko">현재 자산 (만원):</label>
+    <label for="currentAssets" data-lang="en" style="display: none;">Current Assets ($10,000):</label>
+    <input type="number" id="currentAssets" name="currentAssets" min="0" required><br>
+
+    <label for="annualSavings" data-lang="ko">연간 적립액 (만원):</label>
+    <label for="annualSavings" data-lang="en" style="display: none;">Annual Savings ($10,000):</label>
+    <input type="number" id="annualSavings" name="annualSavings" min="0" required><br>
+
+    <label for="annualReturn" data-lang="ko">연간 예상 수익률 (%):</label>
+    <label for="annualReturn" data-lang="en" style="display: none;">Annual Expected Return (%):</label>
+    <input type="number" id="annualReturn" name="annualReturn" min="0" max="100" step="0.1" required><br>
+    <div class="example" data-lang="ko">예시: 안정적인 포트폴리오의 경우 4%, 공격적인 포트폴리오의 경우 8%</div>
+    <div class="example" data-lang="en" style="display: none;">Example: 4% for a conservative portfolio, 8% for an aggressive portfolio</div>
+    <div class="market-returns" data-lang="ko">
+      참고: 최근 20년 나스닥 연 평균 수익률: 약 16.60%<br>
+      S&P500 100년 연 평균 수익률: 약 10%
+    </div>
+    <div class="market-returns" data-lang="en" style="display: none;">
+      Note: NASDAQ average annual return (last 20 years): approx. 16.60%<br>
+      S&P500 average annual return (last 100 years): approx. 10%
+    </div>
+
+    <div style="position: relative;">
+      <canvas id="assetChart" width="800" height="400"></canvas>
+      <div id="expectedReturn" data-lang="ko">50년 후 예상 기대 수익률: </div>
+      <div id="expectedReturn" data-lang="en" style="display: none;">Expected Return after 50 Years: </div>
+    </div>
+  </div>
+
+  <script>
+    let chart;
+
+    function calculateAssets() {
+      const currentAssets = Number(document.getElementById('currentAssets').value);
+      const annualSavings = Number(document.getElementById('annualSavings').value);
+      const annualReturn = Number(document.getElementById('annualReturn').value) / 100;
+
+      let assets = [currentAssets];
+      for (let i = 1; i <= 50; i++) {
+        const prevAssets = assets[i - 1];
+        const newAssets = prevAssets * (1 + annualReturn) + annualSavings;
+        assets.push(newAssets);
+      }
+
+      assets = assets.map(value => value / 10000);
+
+      const expectedReturn = ((assets[50] / assets[0]) - 1) * 100;
+      document.querySelectorAll('#expectedReturn').forEach(el => {
+        el.textContent = el.getAttribute('data-lang') === 'ko'
+          ? `50년 후 예상 기대 수익률: ${expectedReturn.toFixed(2)}%`
+          : `Expected Return after 50 Years: ${expectedReturn.toFixed(2)}%`;
+      });
+
+      if (chart) {
+        chart.data.datasets[0].data = assets;
+        chart.options.scales.x.title.text = document.documentElement.lang === 'ko' ? '년차' : 'Year';
+        chart.options.scales.y.title.text = document.documentElement.lang === 'ko' ? '자산 (억원)' : 'Assets (Million $)';
+        chart.data.datasets[0].label = document.documentElement.lang === 'ko' ? '자산 (억원)' : 'Assets (Million $)';
+        chart.update();
+      } else {
+        chart = new Chart(document.getElementById('assetChart'), {
+          type: 'bar',
+          data: {
+            labels: Array.from({length: 51}, (_, i) => i),
+            datasets: [{
+              label: '자산 (억원)',
+              data: assets,
+              backgroundColor: 'rgba(75, 192, 192, 0.6)',
+              borderColor: 'rgba(75, 192, 192, 1)',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: '년차'
+                }
+              },
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: '자산 (억원)'
+                }
+              }
+            },
+            animation: {
+              duration: 500,
+              easing: 'easeOutQuart'
+            },
+            plugins: {
+              legend: {
+                labels: {
+                  font: {
+                    size: 14
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    function toggleLanguage() {
+      const currentLang = document.documentElement.lang;
+      const newLang = currentLang === 'ko' ? 'en' : 'ko';
+      document.documentElement.lang = newLang;
+      document.querySelectorAll(`[data-lang]:not([data-lang="${newLang}"])`).forEach(el => el.style.display = 'none');
+      document.querySelectorAll(`[data-lang="${newLang}"]`).forEach(el => el.style.display = '');
+      document.querySelector('.language-button').textContent = newLang === 'ko' ? 'Eng' : '한글';
+      calculateAssets();
+    }
+
+    document.getElementById('currentAssets').addEventListener('input', calculateAssets);
+    document.getElementById('annualSavings').addEventListener('input', calculateAssets);
+    document.getElementById('annualReturn').addEventListener('input', calculateAssets);
+
+    calculateAssets();
+  </script>
+</body>
+</html>
