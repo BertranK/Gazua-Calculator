@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>가즈아 계산기</title>
+  <title>가즈아 계산기 💰</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
@@ -118,22 +118,27 @@
 </head>
 <body>
   <div class="container">
-    <h1 data-lang="ko">가즈아 계산기</h1>
-    <h1 data-lang="en" style="display: none;">Gazua Calculator</h1>
+    <h1 data-lang="ko">가즈아 계산기 💰</h1>
+    <h1 data-lang="en" style="display: none;">Gazua Calculator 💰</h1>
     
     <button class="language-button" onclick="toggleLanguage()">Eng</button>
 
-    <label for="currentAssets" data-lang="ko">현재 자산 (만원):</label>
-    <label for="currentAssets" data-lang="en" style="display: none;">Current Assets ($10,000):</label>
+    <label for="currentAssets" data-lang="ko">현재 자산 (만원) 💼:</label>
+    <label for="currentAssets" data-lang="en" style="display: none;">Current Assets ($10,000) 💼:</label>
     <input type="number" id="currentAssets" name="currentAssets" min="0" value="1000" required><br>
 
-    <label for="annualSavings" data-lang="ko">연간 적립액 (만원):</label>
-    <label for="annualSavings" data-lang="en" style="display: none;">Annual Savings ($10,000):</label>
+    <label for="annualSavings" data-lang="ko">연간 적립액 (만원) 🏦:</label>
+    <label for="annualSavings" data-lang="en" style="display: none;">Annual Savings ($10,000) 🏦:</label>
     <input type="number" id="annualSavings" name="annualSavings" min="0" value="1000" required><br>
 
-    <label for="annualReturn" data-lang="ko">연간 예상 수익률 (%):</label>
-    <label for="annualReturn" data-lang="en" style="display: none;">Annual Expected Return (%):</label>
+    <label for="annualReturn" data-lang="ko">연간 예상 수익률 (%) 📈:</label>
+    <label for="annualReturn" data-lang="en" style="display: none;">Annual Expected Return (%) 📈:</label>
     <input type="number" id="annualReturn" name="annualReturn" min="0" max="100" step="0.1" value="8" required><br>
+
+    <label for="years" data-lang="ko">X년 뒤까지 계산 📅:</label>
+    <label for="years" data-lang="en" style="display: none;">Calculate up to X Years 📅:</label>
+    <input type="number" id="years" name="years" min="1" max="100" value="50" required><br>
+
     <div class="example" data-lang="ko">예시: 안정적인 포트폴리오의 경우 4%, 공격적인 포트폴리오의 경우 8%</div>
     <div class="example" data-lang="en" style="display: none;">Example: 4% for a conservative portfolio, 8% for an aggressive portfolio</div>
     <div class="market-returns" data-lang="ko">
@@ -151,15 +156,15 @@
       <div id="expectedReturn" data-lang="en" style="display: none;">Expected Asset after 50 Years: </div>
     </div>
     
-    <h2 data-lang="ko">자산 증가표</h2>
-    <h2 data-lang="en" style="display: none;">Asset Growth Table</h2>
+    <h2 data-lang="ko">자산 증가표 📊</h2>
+    <h2 data-lang="en" style="display: none;">Asset Growth Table 📊</h2>
     <table id="assetsTable">
       <thead>
         <tr>
           <th data-lang="ko">년차</th>
           <th data-lang="en" style="display: none;">Year</th>
-          <th data-lang="ko">자산 (억원)</th>
-          <th data-lang="en" style="display: none;">Assets (Million $)</th>
+          <th data-lang="ko">자산</th>
+          <th data-lang="en" style="display: none;">Assets</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -169,40 +174,50 @@
   <script>
     let chart;
 
+    function formatAssetValue(value) {
+      if (value >= 100000000) {
+        return (value / 100000000).toFixed(0) + ' 조';
+      } else if (value >= 10000) {
+        return (value / 10000).toFixed(0) + ' 억';
+      } else {
+        return value.toFixed(0) + ' 만원';
+      }
+    }
+
     function calculateAssets() {
       const currentAssets = Number(document.getElementById('currentAssets').value);
       const annualSavings = Number(document.getElementById('annualSavings').value);
       const annualReturn = Number(document.getElementById('annualReturn').value) / 100;
+      const years = Number(document.getElementById('years').value);
 
       let assets = [currentAssets];
-      for (let i = 1; i <= 50; i++) {
+      for (let i = 1; i <= years; i++) {
         const prevAssets = assets[i - 1];
         const newAssets = prevAssets * (1 + annualReturn) + annualSavings;
         assets.push(newAssets);
       }
 
-      assets = assets.map(value => value / 10000);
-
-      const expectedReturn = ((assets[50] / assets[0]) - 1) * 100;
+      const expectedReturn = ((assets[years] / assets[0]) - 1) * 100;
       document.querySelectorAll('#expectedReturn').forEach(el => {
         el.textContent = el.getAttribute('data-lang') === 'ko'
-          ? `50년 후 예상 기대 수익률: ${expectedReturn.toFixed(2)}%`
-          : `Expected Return after 50 Years: ${expectedReturn.toFixed(2)}%`;
+          ? `${years}년 후 예상 기대 수익률: ${expectedReturn.toFixed(2)}%`
+          : `Expected Return after ${years} Years: ${expectedReturn.toFixed(2)}%`;
       });
 
       if (chart) {
+        chart.data.labels = Array.from({length: years + 1}, (_, i) => i);
         chart.data.datasets[0].data = assets;
         chart.options.scales.x.title.text = document.documentElement.lang === 'ko' ? '년차' : 'Year';
-        chart.options.scales.y.title.text = document.documentElement.lang === 'ko' ? '자산 (억원)' : 'Assets (Million $)';
-        chart.data.datasets[0].label = document.documentElement.lang === 'ko' ? '자산 (억원)' : 'Assets (Million $)';
+        chart.options.scales.y.title.text = document.documentElement.lang === 'ko' ? '자산' : 'Assets';
+        chart.data.datasets[0].label = document.documentElement.lang === 'ko' ? '자산' : 'Assets';
         chart.update();
       } else {
         chart = new Chart(document.getElementById('assetChart'), {
           type: 'bar',
           data: {
-            labels: Array.from({length: 51}, (_, i) => i),
+            labels: Array.from({length: years + 1}, (_, i) => i),
             datasets: [{
-              label: '자산 (억원)',
+              label: '자산',
               data: assets,
               backgroundColor: 'rgba(75, 192, 192, 0.6)',
               borderColor: 'rgba(75, 192, 192, 1)',
@@ -223,7 +238,12 @@
                 beginAtZero: true,
                 title: {
                   display: true,
-                  text: '자산 (억원)'
+                  text: '자산'
+                },
+                ticks: {
+                  callback: function(value) {
+                    return formatAssetValue(value);
+                  }
                 }
               }
             },
@@ -244,10 +264,10 @@
         });
       }
 
-      updateTable(assets);
+      updateTable(assets, years);
     }
 
-    function updateTable(assets) {
+    function updateTable(assets, years) {
       const tbody = document.getElementById('assetsTable').querySelector('tbody');
       tbody.innerHTML = '';
 
@@ -257,7 +277,7 @@
         const assetCell = document.createElement('td');
 
         yearCell.textContent = index;
-        assetCell.textContent = asset.toFixed(2);
+        assetCell.textContent = formatAssetValue(asset);
 
         row.appendChild(yearCell);
         row.appendChild(assetCell);
@@ -283,6 +303,7 @@
     document.getElementById('currentAssets').addEventListener('input', calculateAssets);
     document.getElementById('annualSavings').addEventListener('input', calculateAssets);
     document.getElementById('annualReturn').addEventListener('input', calculateAssets);
+    document.getElementById('years').addEventListener('input', calculateAssets);
 
     // 초기 계산
     calculateAssets();
