@@ -8,7 +8,8 @@
   <style>
     body {
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+      align-items: center;
       font-family: 'Noto Sans KR', sans-serif;
       background-color: #f0f0f0;
       max-width: 1200px;
@@ -54,9 +55,9 @@
       border-radius: 5px;
     }
     .language-button {
-      position: absolute;
-      top: 10px;
-      right: 10px;
+      position: fixed;
+      top: 20px;
+      right: 20px;
       min-width: 80px;
       min-height: 30px;
       padding: 5px;
@@ -66,6 +67,7 @@
       border: none;
       border-radius: 4px;
       cursor: pointer;
+      z-index: 1000;
     }
     .example {
       font-size: 14px;
@@ -79,6 +81,24 @@
     }
     canvas {
       min-height: 400px;
+    }
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: center;
+      opacity: 1;
+      transition: opacity 0.5s ease-in-out;
+    }
+    th {
+      background-color: #f9f9f9;
+    }
+    .fade-in {
+      opacity: 1;
     }
     @media screen and (max-width: 1200px) {
       #expectedReturn {
@@ -105,15 +125,15 @@
 
     <label for="currentAssets" data-lang="ko">현재 자산 (만원):</label>
     <label for="currentAssets" data-lang="en" style="display: none;">Current Assets ($10,000):</label>
-    <input type="number" id="currentAssets" name="currentAssets" min="0" required><br>
+    <input type="number" id="currentAssets" name="currentAssets" min="0" value="1000" required><br>
 
     <label for="annualSavings" data-lang="ko">연간 적립액 (만원):</label>
     <label for="annualSavings" data-lang="en" style="display: none;">Annual Savings ($10,000):</label>
-    <input type="number" id="annualSavings" name="annualSavings" min="0" required><br>
+    <input type="number" id="annualSavings" name="annualSavings" min="0" value="1000" required><br>
 
     <label for="annualReturn" data-lang="ko">연간 예상 수익률 (%):</label>
     <label for="annualReturn" data-lang="en" style="display: none;">Annual Expected Return (%):</label>
-    <input type="number" id="annualReturn" name="annualReturn" min="0" max="100" step="0.1" required><br>
+    <input type="number" id="annualReturn" name="annualReturn" min="0" max="100" step="0.1" value="8" required><br>
     <div class="example" data-lang="ko">예시: 안정적인 포트폴리오의 경우 4%, 공격적인 포트폴리오의 경우 8%</div>
     <div class="example" data-lang="en" style="display: none;">Example: 4% for a conservative portfolio, 8% for an aggressive portfolio</div>
     <div class="market-returns" data-lang="ko">
@@ -130,8 +150,21 @@
       <div id="expectedReturn" data-lang="ko">50년 후 예상 자산 증가률: </div>
       <div id="expectedReturn" data-lang="en" style="display: none;">Expected Asset after 50 Years: </div>
     </div>
+    
+    <h2 data-lang="ko">자산 증가표</h2>
+    <h2 data-lang="en" style="display: none;">Asset Growth Table</h2>
+    <table id="assetsTable">
+      <thead>
+        <tr>
+          <th data-lang="ko">년차</th>
+          <th data-lang="en" style="display: none;">Year</th>
+          <th data-lang="ko">자산 (억원)</th>
+          <th data-lang="en" style="display: none;">Assets (Million $)</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </div>
-
 
   <script>
     let chart;
@@ -210,6 +243,31 @@
           }
         });
       }
+
+      updateTable(assets);
+    }
+
+    function updateTable(assets) {
+      const tbody = document.getElementById('assetsTable').querySelector('tbody');
+      tbody.innerHTML = '';
+
+      assets.forEach((asset, index) => {
+        const row = document.createElement('tr');
+        const yearCell = document.createElement('td');
+        const assetCell = document.createElement('td');
+
+        yearCell.textContent = index;
+        assetCell.textContent = asset.toFixed(2);
+
+        row.appendChild(yearCell);
+        row.appendChild(assetCell);
+        tbody.appendChild(row);
+
+        // 애니메이션 효과 추가
+        setTimeout(() => {
+          row.childNodes.forEach(cell => cell.classList.add('fade-in'));
+        }, 50);
+      });
     }
 
     function toggleLanguage() {
@@ -226,6 +284,7 @@
     document.getElementById('annualSavings').addEventListener('input', calculateAssets);
     document.getElementById('annualReturn').addEventListener('input', calculateAssets);
 
+    // 초기 계산
     calculateAssets();
   </script>
 </body>
