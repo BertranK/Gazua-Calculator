@@ -33,26 +33,47 @@
       display: block;
       margin-bottom: 5px;
       color: #4a4a4a;
+      width: 30%;
     }
-    input[type="number"] {
+    .input-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       width: 100%;
+      margin-bottom: 10px;
+    }
+    
+    .input-wrapper label {
+      width: 30%; /* 입력 라벨의 너비 조정 */
+    }
+
+    .input-wrapper input {
+      width: 70%; /* 입력 필드의 너비 조정 */
+    }
+    
+    input[type="currency"],
+    input[type="number"],
+    #annualReturnSlider {
+      flex: 1;
       padding: 10px;
       border: 1px solid #ccc;
       border-radius: 4px;
       box-sizing: border-box;
       margin-bottom: 10px;
+      text-align: right;
+      font: 20px Arial;
     }
-    #expectedReturn {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 24px;
+    #annualReturnSlider {
+      margin-right: 10px;
+    }
+    #annualReturnSliderValue {
       font-weight: bold;
-      color: #4a4a4a;
-      background-color: rgba(255, 255, 255, 0.8);
-      padding: 10px;
-      border-radius: 5px;
+    }
+    #yearsWrapper {
+      order: 4;
+    }
+    #annualReturnWrapper {
+      order: 3;
     }
     .language-button {
       position: fixed;
@@ -81,6 +102,7 @@
     }
     canvas {
       min-height: 400px;
+      max-height: 400px; /* 그래프의 최대 높이 제한 */
     }
     table {
       width: 100%;
@@ -123,21 +145,30 @@
     
     <button class="language-button" onclick="toggleLanguage()">Eng</button>
 
-    <label for="currentAssets" data-lang="ko">현재 자산 💼:</label>
-    <label for="currentAssets" data-lang="en" style="display: none;">Current Assets 💼:</label>
-    <input type="number" id="currentAssets" name="currentAssets" min="0" value="10000000" required>원<br>
+    <div class="input-wrapper">
+      <label for="currentAssets" data-lang="ko">현재 자산 💼:</label>
+      <label for="currentAssets" data-lang="en" style="display: none;">Current Assets 💼:</label>
+      <input type="currency" id="currentAssets" name="currentAssets" value="10000000" required>
+    </div>
 
-    <label for="annualSavings" data-lang="ko">연간 적립액 🏦:</label>
-    <label for="annualSavings" data-lang="en" style="display: none;">Annual Savings 🏦:</label>
-    <input type="number" id="annualSavings" name="annualSavings" min="0" value="10000000" required>원<br>
+    <div class="input-wrapper">
+      <label for="annualSavings" data-lang="ko">연간 적립액 🏦:</label>
+      <label for="annualSavings" data-lang="en" style="display: none;">Annual Savings 🏦:</label>
+      <input type="currency" id="annualSavings" name="annualSavings" value="10000000" required>
+    </div>
+    
+    <div class="input-wrapper" id="yearsWrapper">
+      <label for="years" data-lang="ko">X년 뒤까지 계산 📅:</label>
+      <label for="years" data-lang="en" style="display: none;">Calculate up to X Years 📅:</label>
+      <input type="number" id="years" name="years" min="1" max="1000" value="50" required>
+    </div>
 
-    <label for="annualReturn" data-lang="ko">연간 예상 수익률 (%) 📈:</label>
-    <label for="annualReturn" data-lang="en" style="display: none;">Annual Expected Return (%) 📈:</label>
-    <input type="number" id="annualReturn" name="annualReturn" min="0" max="999" step="0.1" value="8" required><br>
-
-    <label for="years" data-lang="ko">X년 뒤까지 계산 📅:</label>
-    <label for="years" data-lang="en" style="display: none;">Calculate up to X Years 📅:</label>
-    <input type="number" id="years" name="years" min="1" max="1000" value="50" required><br>
+    <div class="input-wrapper" id="annualReturnWrapper">
+      <label for="annualReturn" data-lang="ko">연간 예상 수익률 (%) 📈:</label>
+      <label for="annualReturn" data-lang="en" style="display: none;">Annual Expected Return (%) 📈:</label>
+      <input type="range" id="annualReturnSlider" name="annualReturn" min="0" max="100" step="0.1" value="8">
+      <span id="annualReturnSliderValue">8%</span>
+    </div>
 
     <div class="example" data-lang="ko">예시: 안정적인 포트폴리오의 경우 4%, 공격적인 포트폴리오의 경우 8%</div>
     <div class="example" data-lang="en" style="display: none;">Example: 4% for a conservative portfolio, 8% for an aggressive portfolio</div>
@@ -173,45 +204,91 @@
 
   <script>
     let chart;
+    var currencyInput1 = document.querySelector('#currentAssets');
+    var currencyInput2 = document.querySelector('#annualSavings');
+    var currency = 'KRW';
+
+    // format initial value
+    onBlur({target:currencyInput1});
+    onBlur({target:currencyInput2});
+
+    // bind event listeners
+    currencyInput1.addEventListener('focus', onFocus);
+    currencyInput1.addEventListener('blur', onBlur);
+    currencyInput2.addEventListener('focus', onFocus);
+    currencyInput2.addEventListener('blur', onBlur);
+
+    function localStringToNumber(s) {
+      return Number(String(s).replace(/[^0-9.-]+/g,""))
+    }
+
+    function onFocus(e) {
+      var value = e.target.value;
+      e.target.value = value ? localStringToNumber(value) : '';
+    }
+
+    function onBlur(e) {
+      var value = e.target.value;
+
+      var options = {
+        maximumFractionDigits: 0,
+        currency: currency,
+        style: "currency",
+        currencyDisplay: "symbol"
+      }
+
+      e.target.value = (value || value === 0) ? localStringToNumber(value).toLocaleString(undefined, options) : '';
+    }
 
     function formatAssetValue(value) {
-      if (value >= 10000000000000000000000000000) {
-        return (value / 10000000000000000000000000000).toFixed(0) + ' 구';
-      } else if (value >= 100000000000000000000000000) {
-        return (value / 100000000000000000000000000).toFixed(0) + ' 간';
-      } else if (value >= 1000000000000000000000000) {
-        return (value / 1000000000000000000000000).toFixed(0) + ' 정';
-      } else if (value >= 10000000000000000000000) {
-        return (value / 10000000000000000000000).toFixed(0) + ' 재';
-      } else if (value >= 100000000000000000000) {
-        return (value / 100000000000000000000).toFixed(0) + ' 자';
-      } else if (value >= 1000000000000000000) {
-        return (value / 1000000000000000000).toFixed(0) + ' 해';
-      } else if (value >= 10000000000000000) {
+      if (value >= 10000000000000000) {
         return (value / 10000000000000000).toFixed(0) + ' 경';
-      } else if (value >= 100000000000000) {
-        return (value / 100000000000000).toFixed(0) + ' 조';
       } else if (value >= 1000000000000) {
-        return (value / 1000000000000).toFixed(0) + ' 억';
-      } else if (value >= 10000000000) {
-        return (value / 10000000000).toFixed(0) + ' 십억';
+        return (value / 1000000000000).toFixed(0) + ' 조';
       } else if (value >= 100000000) {
-        return (value / 100000000).toFixed(0) + ' 억';
-      } else if (value >= 10000000) {
-        return (value / 10000000).toFixed(0) + ' 천만';
-      } else if (value >= 1000000) {
-        return (value / 1000000).toFixed(0) + ' 백만';
+        return (value / 100000000).toFixed(0) + ' 억원';
       } else if (value >= 10000) {
-        return (value / 10000).toFixed(0) + ' 만';
+        return (value / 10000).toFixed(0) + ' 만원';
       } else {
         return value.toFixed(0) + ' 원';
       }
     }
 
+    function toggleLanguage() {
+      const currentLang = document.documentElement.lang;
+      const newLang = currentLang === 'ko' ? 'en' : 'ko';
+      document.documentElement.lang = newLang;
+      document.querySelectorAll(`[data-lang]:not([data-lang="${newLang}"])`).forEach(el => el.style.display = 'none');
+      document.querySelectorAll(`[data-lang="${newLang}"]`).forEach(el => el.style.display = '');
+      document.querySelector('.language-button').textContent = newLang === 'ko' ? 'Eng' : 'Kor';
+      translateLabels();
+      calculateAssets();
+    }
+
+    function translateLabels() {
+      const language = document.documentElement.lang;
+      const labels = document.querySelectorAll('[data-lang]');
+      labels.forEach(label => {
+        if (label.dataset.lang === language) {
+          label.style.display = '';
+        } else {
+          label.style.display = 'none';
+        }
+      });
+
+      // Update chart axis titles and dataset label
+      if (chart) {
+        chart.options.scales.x.title.text = language === 'ko' ? '년차' : 'Year';
+        chart.options.scales.y.title.text = language === 'ko' ? '자산' : 'Assets';
+        chart.data.datasets[0].label = language === 'ko' ? '자산' : 'Assets';
+        chart.update();
+      }
+    }
+
     function calculateAssets() {
-      const currentAssets = Number(document.getElementById('currentAssets').value);
-      const annualSavings = Number(document.getElementById('annualSavings').value);
-      const annualReturn = Number(document.getElementById('annualReturn').value) / 100;
+      const currentAssets = localStringToNumber(document.getElementById('currentAssets').value);
+      const annualSavings = localStringToNumber(document.getElementById('annualSavings').value);
+      const annualReturn = Number(document.getElementById('annualReturnSlider').value) / 100;
       const years = Number(document.getElementById('years').value);
 
       let assets = [currentAssets];
@@ -227,20 +304,19 @@
           : `Expected Assets after ${years} Years: ${formatAssetValue(assets[years])}`;
       });
 
+      const labels = Array.from({length: years + 1}, (_, i) => document.documentElement.lang === 'ko' ? `${i} 년차` : `${i} Year`);
+
       if (chart) {
-        chart.data.labels = Array.from({length: years + 1}, (_, i) => `${i} 년차`);
+        chart.data.labels = labels;
         chart.data.datasets[0].data = assets;
-        chart.options.scales.x.title.text = document.documentElement.lang === 'ko' ? '년차' : 'Year';
-        chart.options.scales.y.title.text = document.documentElement.lang === 'ko' ? '자산' : 'Assets';
-        chart.data.datasets[0].label = document.documentElement.lang === 'ko' ? '자산' : 'Assets';
         chart.update();
       } else {
         chart = new Chart(document.getElementById('assetChart'), {
           type: 'bar',
           data: {
-            labels: Array.from({length: years + 1}, (_, i) => `${i} 년차`),
+            labels: labels,
             datasets: [{
-              label: '자산',
+              label: document.documentElement.lang === 'ko' ? '자산' : 'Assets',
               data: assets,
               backgroundColor: 'rgba(75, 192, 192, 0.6)',
               borderColor: 'rgba(75, 192, 192, 1)',
@@ -254,14 +330,14 @@
               x: {
                 title: {
                   display: true,
-                  text: '년차'
+                  text: document.documentElement.lang === 'ko' ? '년차' : 'Year'
                 }
               },
               y: {
                 beginAtZero: true,
                 title: {
                   display: true,
-                  text: '자산'
+                  text: document.documentElement.lang === 'ko' ? '자산' : 'Assets'
                 },
                 ticks: {
                   callback: function(value) {
@@ -299,7 +375,7 @@
         const yearCell = document.createElement('td');
         const assetCell = document.createElement('td');
 
-        yearCell.textContent = `${index} 년차`;
+        yearCell.textContent = document.documentElement.lang === 'ko' ? `${index} 년차` : `${index} Year`;
         assetCell.textContent = formatAssetValue(asset);
 
         row.appendChild(yearCell);
@@ -313,23 +389,21 @@
       });
     }
 
-    function toggleLanguage() {
-      const currentLang = document.documentElement.lang;
-      const newLang = currentLang === 'ko' ? 'en' : 'ko';
-      document.documentElement.lang = newLang;
-      document.querySelectorAll(`[data-lang]:not([data-lang="${newLang}"])`).forEach(el => el.style.display = 'none');
-      document.querySelectorAll(`[data-lang="${newLang}"]`).forEach(el => el.style.display = '');
-      document.querySelector('.language-button').textContent = newLang === 'ko' ? 'Eng' : '한글';
+    currencyInput1.addEventListener('input', calculateAssets);
+    currencyInput2.addEventListener('input', calculateAssets);
+    document.getElementById('annualReturnSlider').addEventListener('input', function() {
+      const value = document.getElementById('annualReturnSlider').value;
+      document.getElementById('annualReturnSliderValue').textContent = `${value}%`;
       calculateAssets();
-    }
-
-    document.getElementById('currentAssets').addEventListener('input', calculateAssets);
-    document.getElementById('annualSavings').addEventListener('input', calculateAssets);
-    document.getElementById('annualReturn').addEventListener('input', calculateAssets);
+    });
     document.getElementById('years').addEventListener('input', calculateAssets);
 
-    // 초기 계산
-    calculateAssets();
+    // 페이지 로드 시 초기 번역 및 계산 적용
+    document.addEventListener('DOMContentLoaded', function() {
+      translateLabels();
+      calculateAssets();
+    });
+
   </script>
 </body>
 </html>
