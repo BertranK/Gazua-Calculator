@@ -33,7 +33,7 @@
       display: block;
       margin-bottom: 5px;
       color: #4a4a4a;
-      width: 30%;
+      width: 50%;
     }
     .input-wrapper {
       display: flex;
@@ -44,16 +44,16 @@
     }
     
     .input-wrapper label {
-      width: 30%; /* 입력 라벨의 너비 조정 */
+      width: 50%; /* 입력 라벨의 너비 조정 */
     }
 
     .input-wrapper input {
-      width: 70%; /* 입력 필드의 너비 조정 */
+      width: 50%; /* 입력 필드의 너비 조정 */
     }
     
     input[type="currency"],
     input[type="number"],
-    #annualReturnSlider {
+    input[type="range"] {
       flex: 1;
       padding: 10px;
       border: 1px solid #ccc;
@@ -63,11 +63,48 @@
       text-align: right;
       font: 20px Arial;
     }
-    #annualReturnSlider {
-      margin-right: 10px;
+    input[type="range"] {
+      width: 100%; /* 슬라이더의 너비를 100%로 설정 */
+      appearance: none;
+      background: #ffffff; /* 슬라이더 배경색을 흰색으로 설정 */
+      height: 6px;
+      border-radius: 5px;
+      outline: none;
+      opacity: 0.7;
+      transition: opacity 0.2s;
     }
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      height: 30px;
+      width: 30px;
+      background-image: url("https://ibaslogic.github.io/hosted-assets/smile.png");
+      background-size: cover;
+      cursor: pointer;
+      border-radius: 50%;
+      transform: rotateZ(var(--thumb-rotate, 0deg));
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      height: 30px;
+      width: 30px;
+      background-image: url("https://ibaslogic.github.io/hosted-assets/smile.png");
+      background-size: cover;
+      cursor: pointer;
+      border-radius: 50%;
+      transform: rotateZ(var(--thumb-rotate, 0deg));
+    }
+
     #annualReturnSliderValue {
+      position: absolute;
+      top: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(75, 192, 192, 1);
+      color: white;
+      padding: 5px;
+      border-radius: 3px;
       font-weight: bold;
+      display: none;
     }
     #yearsWrapper {
       order: 4;
@@ -146,15 +183,15 @@
     <button class="language-button" onclick="toggleLanguage()">Eng</button>
 
     <div class="input-wrapper">
-      <label for="currentAssets" data-lang="ko">현재 자산 💼:</label>
-      <label for="currentAssets" data-lang="en" style="display: none;">Current Assets 💼:</label>
-      <input type="currency" id="currentAssets" name="currentAssets" value="10000000" required>
+      <label for="currentAssets" data-lang="ko">현재 자산 💼 (만원):</label>
+      <label for="currentAssets" data-lang="en" style="display: none;">Current Assets 💼 (10,000 KRW):</label>
+      <input type="number" id="currentAssets" name="currentAssets" value="1000" required>
     </div>
 
     <div class="input-wrapper">
-      <label for="annualSavings" data-lang="ko">연간 적립액 🏦:</label>
-      <label for="annualSavings" data-lang="en" style="display: none;">Annual Savings 🏦:</label>
-      <input type="currency" id="annualSavings" name="annualSavings" value="10000000" required>
+      <label for="annualSavings" data-lang="ko">연간 적립액 🏦 (만원):</label>
+      <label for="annualSavings" data-lang="en" style="display: none;">Annual Savings 🏦 (10,000 KRW):</label>
+      <input type="number" id="annualSavings" name="annualSavings" value="1000" required>
     </div>
     
     <div class="input-wrapper" id="yearsWrapper">
@@ -166,7 +203,11 @@
     <div class="input-wrapper" id="annualReturnWrapper">
       <label for="annualReturn" data-lang="ko">연간 예상 수익률 (%) 📈:</label>
       <label for="annualReturn" data-lang="en" style="display: none;">Annual Expected Return (%) 📈:</label>
-      <input type="range" id="annualReturnSlider" name="annualReturn" min="0" max="100" step="0.1" value="8">
+      <input type="number" id="annualReturn" name="annualReturn" min="0.1" max="100" step="0.1" value="8" required>
+    </div>
+
+    <div class="input-wrapper" style="position: relative;">
+      <input type="range" id="annualReturnSlider" name="annualReturn" min="0.1" max="100" step="0.1" value="8" oninput="showTooltip(this)">
       <span id="annualReturnSliderValue">8%</span>
     </div>
 
@@ -174,17 +215,19 @@
     <div class="example" data-lang="en" style="display: none;">Example: 4% for a conservative portfolio, 8% for an aggressive portfolio</div>
     <div class="market-returns" data-lang="ko">
       참고: 최근 20년 나스닥 연 평균 수익률: 약 16.60%<br>
-      S&P500 100년 연 평균 수익률: 약 10%
+      S&P500 100년 연 평균 수익률: 약 10%<br>
+      비트코인 2013-2023 수익률: 7384%, 연 평균 671%
     </div>
     <div class="market-returns" data-lang="en" style="display: none;">
       Note: NASDAQ average annual return (last 20 years): approx. 16.60%<br>
-      S&P500 average annual return (last 100 years): approx. 10%
+      S&P500 average annual return (last 100 years): approx. 10%<br>
+      Bitcoin 2013-2023 return: 7384%, annual average 671%
     </div>
 
     <div style="position: relative;">
       <canvas id="assetChart"></canvas>
-      <div id="expectedReturn" data-lang="ko">X년 후 예상 자산: </div>
-      <div id="expectedReturn" data-lang="en" style="display: none;">Expected Assets after X Years: </div>
+      <div id="expectedReturn" data-lang="ko" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; font-weight: bold; color: #4a4a4a; background-color: rgba(255, 255, 255, 0.8); padding: 10px; border-radius: 5px;"></div>
+      <div id="expectedReturn" data-lang="en" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; font-weight: bold; color: #4a4a4a; background-color: rgba(255, 255, 255, 0.8); padding: 10px; border-radius: 5px;"></div>
     </div>
     
     <h2 data-lang="ko">자산 증가표 📊</h2>
@@ -204,54 +247,81 @@
 
   <script>
     let chart;
-    var currencyInput1 = document.querySelector('#currentAssets');
-    var currencyInput2 = document.querySelector('#annualSavings');
     var currency = 'KRW';
-
-    // format initial value
-    onBlur({target:currencyInput1});
-    onBlur({target:currencyInput2});
-
-    // bind event listeners
-    currencyInput1.addEventListener('focus', onFocus);
-    currencyInput1.addEventListener('blur', onBlur);
-    currencyInput2.addEventListener('focus', onFocus);
-    currencyInput2.addEventListener('blur', onBlur);
 
     function localStringToNumber(s) {
       return Number(String(s).replace(/[^0-9.-]+/g,""))
     }
 
-    function onFocus(e) {
-      var value = e.target.value;
-      e.target.value = value ? localStringToNumber(value) : '';
-    }
+	function formatAssetValue(value) {
+	  let result = '';
+	  let units = [
+		{ threshold: 10000000000000000, unit: '경' },
+		{ threshold: 1000000000000, unit: '조' },
+		{ threshold: 100000000, unit: '억' },
+		{ threshold: 10000, unit: '만' }
+	  ];
 
-    function onBlur(e) {
-      var value = e.target.value;
+	  let unitCount = 0;
 
-      var options = {
-        maximumFractionDigits: 0,
-        currency: currency,
-        style: "currency",
-        currencyDisplay: "symbol"
-      }
+	  for (let i = 0; i < units.length; i++) {
+		if (value >= units[i].threshold && unitCount < 2) {
+		  let unitValue = Math.floor(value / units[i].threshold);
+		  result += `${unitValue} ${units[i].unit} `;
+		  value %= units[i].threshold;
+		  unitCount++;
+		}
+	  }
 
-      e.target.value = (value || value === 0) ? localStringToNumber(value).toLocaleString(undefined, options) : '';
-    }
+	  if (unitCount < 2) {
+		if (value >= 10000) {
+		  value = Math.floor(value / 10000);
+		  result += `${value} 만원`;
+		} else if (value > 0 || result === '') {
+		  result += `${value.toFixed(0)} 원`;
+		}
+	  }
 
-    function formatAssetValue(value) {
+	  result = result.trim().replace(/ 0[조억만원원]$/, '').replace(/ 0[조억만원원]$/, '');
+
+	  // 마지막 단위에 "원"을 추가
+	  if (!result.endsWith('원') && !result.includes('만원')) {
+		result += '원';
+	  }
+
+	  return result;
+	}
+
+    function formatAssetValueEnglish(value) {
+      let result = '';
       if (value >= 10000000000000000) {
-        return (value / 10000000000000000).toFixed(0) + ' 경';
-      } else if (value >= 1000000000000) {
-        return (value / 1000000000000).toFixed(0) + ' 조';
-      } else if (value >= 100000000) {
-        return (value / 100000000).toFixed(0) + ' 억원';
-      } else if (value >= 10000) {
-        return (value / 10000).toFixed(0) + ' 만원';
-      } else {
-        return value.toFixed(0) + ' 원';
+        result = `${Math.floor(value / 10000000000000000)} Quadrillion `;
+        value %= 10000000000000000;
       }
+      if (value >= 1000000000000) {
+        result += `${Math.floor(value / 1000000000000)} Trillion `;
+        value %= 1000000000000;
+      }
+      if (value >= 100000000) {
+        result += `${Math.floor(value / 100000000)} Billion `;
+        value %= 100000000;
+      }
+      if (value >= 10000) {
+        result += `${Math.floor(value / 10000)} Million `;
+        value %= 10000;
+      }
+      if (value > 0 || result === '') {
+        result += `${value.toFixed(0)} KRW`;
+      }
+      return result.trim().replace(/ 0[ThousandMillionBillionTrillion]$/, '');
+    }
+
+    function showTooltip(slider) {
+      const tooltip = document.getElementById('annualReturnSliderValue');
+      tooltip.style.left = `${slider.value}%`;
+      tooltip.textContent = `${slider.value}%`;
+      tooltip.style.display = 'block';
+      slider.style.setProperty("--thumb-rotate", `${(slider.value/100) * 2160}deg`);
     }
 
     function toggleLanguage() {
@@ -286,10 +356,13 @@
     }
 
     function calculateAssets() {
-      const currentAssets = localStringToNumber(document.getElementById('currentAssets').value);
-      const annualSavings = localStringToNumber(document.getElementById('annualSavings').value);
-      const annualReturn = Number(document.getElementById('annualReturnSlider').value) / 100;
+      const currentAssets = localStringToNumber(document.getElementById('currentAssets').value) * 10000; // 1만원 단위로 변환
+      const annualSavings = localStringToNumber(document.getElementById('annualSavings').value) * 10000; // 1만원 단위로 변환
+      const annualReturn = Number(document.getElementById('annualReturn').value) / 100;
       const years = Number(document.getElementById('years').value);
+
+      document.getElementById('annualReturnSlider').value = annualReturn * 100;
+      document.getElementById('annualReturnSliderValue').textContent = `${annualReturn * 100}%`;
 
       let assets = [currentAssets];
       for (let i = 1; i <= years; i++) {
@@ -301,7 +374,7 @@
       document.querySelectorAll('#expectedReturn').forEach(el => {
         el.textContent = el.getAttribute('data-lang') === 'ko'
           ? `${years}년 후 예상 자산: ${formatAssetValue(assets[years])}`
-          : `Expected Assets after ${years} Years: ${formatAssetValue(assets[years])}`;
+          : `Expected Assets after ${years} Years: ${formatAssetValueEnglish(assets[years])}`;
       });
 
       const labels = Array.from({length: years + 1}, (_, i) => document.documentElement.lang === 'ko' ? `${i} 년차` : `${i} Year`);
@@ -341,14 +414,14 @@
                 },
                 ticks: {
                   callback: function(value) {
-                    return formatAssetValue(value);
+                    return document.documentElement.lang === 'ko' ? formatAssetValue(value) : formatAssetValueEnglish(value);
                   }
                 }
               }
             },
             animation: {
               duration: 500,
-              easing: 'easeOutQuart'
+              easing: 'easeInQuint'
             },
             plugins: {
               legend: {
@@ -376,7 +449,7 @@
         const assetCell = document.createElement('td');
 
         yearCell.textContent = document.documentElement.lang === 'ko' ? `${index} 년차` : `${index} Year`;
-        assetCell.textContent = formatAssetValue(asset);
+        assetCell.textContent = document.documentElement.lang === 'ko' ? `${formatAssetValue(asset)}` : `${formatAssetValueEnglish(asset)}`;
 
         row.appendChild(yearCell);
         row.appendChild(assetCell);
@@ -389,21 +462,27 @@
       });
     }
 
-    currencyInput1.addEventListener('input', calculateAssets);
-    currencyInput2.addEventListener('input', calculateAssets);
+    document.getElementById('annualReturn').addEventListener('input', function() {
+      const value = document.getElementById('annualReturn').value;
+      document.getElementById('annualReturnSlider').value = value;
+      document.getElementById('annualReturnSliderValue').textContent = `${value}%`;
+      calculateAssets();
+    });
     document.getElementById('annualReturnSlider').addEventListener('input', function() {
       const value = document.getElementById('annualReturnSlider').value;
+      document.getElementById('annualReturn').value = value;
       document.getElementById('annualReturnSliderValue').textContent = `${value}%`;
       calculateAssets();
     });
     document.getElementById('years').addEventListener('input', calculateAssets);
+    document.getElementById('currentAssets').addEventListener('input', calculateAssets);
+    document.getElementById('annualSavings').addEventListener('input', calculateAssets);
 
     // 페이지 로드 시 초기 번역 및 계산 적용
     document.addEventListener('DOMContentLoaded', function() {
       translateLabels();
       calculateAssets();
     });
-
   </script>
 </body>
 </html>
